@@ -43,6 +43,7 @@ Usage:
         Down Arrow    Decrease amplitude
         Right Arrow   Shift right in the WAV file
         Left Arrow    Shift left in the WAV file
+        q or ESC      Quit the applicaiton.
         
     sample usage:
     
