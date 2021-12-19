@@ -23,6 +23,7 @@ Usage:
         -I            Like -i, but first deletes PNG files in osc_images
         -o:n          Offset; start at n seconds into the WAV file
         -p:n          The period, where n is A through G above middle C
+                      Default period is .002273 seconds, the wavelength of A above middle C
         -r            Ignore prior window position stored in the registry
         -t            Append debugging traces to osc.txt
         -T            Like -t, but first delete osc.txt
