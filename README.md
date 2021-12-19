@@ -9,8 +9,8 @@ To build on Windows:
 
     Using a Visual Studio x64 Native Tools Command Prompt window:
     
-        m.bat for a debug build
-        mr.bat for no-debug
+        m.bat         Debug build
+        mr.bat        Non-debug build
     
 Usage:
     
@@ -32,6 +32,7 @@ Usage:
         right-click   context menu
         
     keyboard:
+    
         ctrl+c        copy current view to the clipboard
         ctrl+s        saves current view to osc_images\osc-N.png
         Page Up       Zoom out. Increase period by one half step
@@ -42,6 +43,7 @@ Usage:
         Left Arror    Shift left in the WAV file
         
     sample usage:
+    
         osc myfile.wav
         osc myfile.wav -o:30.2                           # starts the view 30.2 seconds into the WAV file
         osc myfile.wav -p:f                              # sets the time for window width to F above middle C
