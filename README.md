@@ -6,6 +6,7 @@ Windows application that displays uncompressed WAV files in an oscilloscope-like
 To build on Windows:
 
     Using a Visual Studio x64 Native Tools Command Prompt window:
+    
         m.bat for a debug build
         mr.bat for no-debug
     
