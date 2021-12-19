@@ -9,8 +9,8 @@ To build on Windows:
 
     Using a Visual Studio x64 Native Tools Command Prompt window:
     
-        m.bat         Debug build
-        mr.bat        Non-debug build
+        m.bat         Debug build (make)
+        mr.bat        Non-debug build (make retail)
     
 Usage:
     
@@ -20,10 +20,10 @@ Usage:
         
         input         The WAV file to view
         -i            Creates PNGs in osc_images\osc-N for each frame shown
-        -I            Like -i, but first deletes PNG files in osc_images
+        -I            Like -i, but first deletes PNG files in the osc_images\ folder
         -o:n          Offset; start at n seconds into the WAV file
         -p:n          The period, where n is A through G above middle C
-                      Default period is .002273 seconds, the wavelength of A above middle C
+                      Default period is A: 0.002273 seconds, the wavelength of A above middle C
         -r            Ignore prior window position stored in the registry
         -t            Append debugging traces to osc.txt
         -T            Like -t, but first delete osc.txt
@@ -42,7 +42,7 @@ Usage:
         Up Arrow      Increase amplitude
         Down Arrow    Decrease amplitude
         Right Arrow   Shift right in the WAV file
-        Left Arror    Shift left in the WAV file
+        Left Arrow    Shift left in the WAV file
         
     sample usage:
     
