@@ -1,0 +1,25 @@
+#include <windows.h>
+#include "osc.hxx"
+
+ID_OSC_ICON ICON "osc.ico"
+
+ID_OSC_POPUPMENU MENU
+BEGIN
+    POPUP "contextmenu"
+    BEGIN
+        MENUITEM "&Copy\tCtrl+c",                ID_OSC_COPY
+        MENUITEM "&Save\tCtrl+s",                ID_OSC_SAVE
+        MENUITEM SEPARATOR
+        MENUITEM "&Help\tF1",                    ID_OSC_HELP
+    END
+END
+
+ID_OSC_HELP_DIALOG DIALOGEX 100, 100, 270, 360
+STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_BORDER | WS_SYSMENU
+CAPTION "Oscilloscope Help"
+FONT 10, "MS Shell Dlg 2"
+BEGIN
+    LTEXT "Usage: osc", ID_OSC_HELP_DIALOG_TEXT,  8, 10,  256,  350, SS_NOPREFIX
+END
+
+
