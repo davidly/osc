@@ -18,6 +18,7 @@ Usage:
     
     arguments:
         
+        input         The WAV file to view
         -i            Creates PNGs in osc_images\osc-N for each frame shown
         -I            Like -i, but first deletes PNG files in osc_images
         -o:n          Offset; start at n seconds into the WAV file
