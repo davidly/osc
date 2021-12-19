@@ -447,6 +447,30 @@ void PutBitmapInClipboard( HWND hwnd, HBITMAP hbitmap )
     }
 } //PutBitmapInClipboard
 
+void PutBitmapInFile( HBITMAP hbitmap )
+{
+    CreateDirectory( g_imagesFolder, 0 );
+    static WCHAR awcFile[ 100 ];
+    const int MaxFile = 1000000;
+    int i = 0;
+
+    do
+    {
+        swprintf_s( awcFile, _countof( awcFile ), L"%ws\\osc-%d.png", g_imagesFolder, i );
+        if ( INVALID_FILE_ATTRIBUTES == GetFileAttributes( awcFile ) )
+            break;
+        i++;
+    } while ( i < MaxFile );
+
+    if ( i < MaxFile )
+    {
+        Bitmap bmp( hbitmap, 0 );
+        CLSID clsidPNG;
+        CLSIDFromString( L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsidPNG );
+        bmp.Save( awcFile, &clsidPNG );
+    }
+} //PutBitmapInFile
+
 void RenderView( HWND hwnd, bool clipboard )
 {
     RECT rect;
@@ -470,28 +494,7 @@ void RenderView( HWND hwnd, bool clipboard )
     if ( clipboard )
         PutBitmapInClipboard( hwnd, bmpClip );
     else
-    {
-        CreateDirectory( g_imagesFolder, 0 );
-        static WCHAR awcFile[ 100 ];
-        const int MaxFile = 1000000;
-        int i = 0;
-
-        do
-        {
-            swprintf_s( awcFile, _countof( awcFile ), L"%ws\\osc-%d.png", g_imagesFolder, i );
-            if ( INVALID_FILE_ATTRIBUTES == GetFileAttributes( awcFile ) )
-                break;
-            i++;
-        } while ( i < MaxFile );
-
-        if ( i < MaxFile )
-        {
-            Bitmap bmp( bmpClip, 0 );
-            CLSID clsidPNG;
-            CLSIDFromString( L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsidPNG );
-            bmp.Save( awcFile, &clsidPNG );
-        }
-    }
+        PutBitmapInFile( bmpClip );
     
     DeleteObject( bmpClip );
     DeleteDC( hdcClip );
@@ -525,6 +528,7 @@ extern "C" INT_PTR WINAPI HelpDialogProc( HWND hdlg, UINT message, WPARAM wParam
                                      "\tDown Arrow\tDecrease amplitude\n"
                                      "\tRight Arrow\tShift right in the WAV file\n"
                                      "\tLeft Arrow\tShift left in the WAV file\n"
+                                     "\tq or esc   \tquit the application\n"
                                      "\n"
                                      "sample usage:\n"
                                      "\tosc myfile.wav\n"
