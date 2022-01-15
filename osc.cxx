@@ -48,6 +48,7 @@ bool g_createImages = false;
 const WCHAR * g_imagesFolder = L"osc_images";
 
 const int g_waveformWindowSize = 969; // nice. needs to be odd.
+const WORD g_maxChannels = 16;
 
 long long timeSetPixels = 0;
 long long timeBorderText = 0;
@@ -361,7 +362,10 @@ void RenderToDC( HDC hdc, RECT & rect )
     const DWORD lastSample = __min( firstSample + shownSamples, g_wavSamples );
     const double xFactor = (double) ( rect.right - 2 * g_borderSize - 1 ) / (double) shownSamples;
     const double halfBottom = (double) ( ( rect.bottom - 1 ) - 2 * g_borderSize ) / 2.0;
-    const bool stereo = ( 2 == fmt.channels );
+    const COLORREF channelColors[ g_maxChannels ] = { 0xffffff, 0xff0000, 0x00ff00, 0xffff00,
+                                                      0xcc0000, 0x00cc00, 0x0000cc, 0xcccc00,
+                                                      0x880000, 0x008800, 0x000088, 0x888800,
+                                                      0x440000, 0x004400, 0x000044, 0x444400 };
 
     //tracer.Trace( "g_viewPeriod %.10lf, seconds %lf, shownSamples: %u\n", g_viewPeriod, g_wavSeconds, shownSamples );
 
@@ -381,23 +385,40 @@ void RenderToDC( HDC hdc, RECT & rect )
     
         ULONG * pbuf = (ULONG *) pb;
         const DWORD waveformBottom = rect.bottom - g_borderSize;
+        WORD channelCount = __min( g_pwav->Channels(), _countof( channelColors ) );
+        const DWORD invalidY = 0xffffffff;
     
         parallel_for( firstSample, lastSample, [&] ( DWORD s )
         {
             DWORD x = g_borderSize + (DWORD) round( (double) ( s - firstSample ) * xFactor );
-            double l = g_pwav->GetSampleLeft( s );
-            DWORD yl = g_borderSize + SampleToY( l, halfBottom );
+            DWORD yval[ g_maxChannels ];
 
-            if ( InWaveformRange( yl, waveformBottom ) )
-                pbuf[ strideby4 * yl + x ] = 0xffffff;  // white for Left
-    
-            if ( stereo )
+            for ( WORD ch = 0; ch < channelCount; ch++ )
             {
-                double r = g_pwav->GetSampleRight( s );
-                DWORD yr = g_borderSize + SampleToY( r, halfBottom );
-                    
-                if ( InWaveformRange( yr, waveformBottom ) )
-                    pbuf[ strideby4 * yr + x ] = ( yl == yr ) ? 0xff : 0xff0000; // blue for Both, red for Right
+                double v = g_pwav->GetSampleInChannel( s, ch );
+                DWORD yv = g_borderSize + SampleToY( v, halfBottom );
+                if ( InWaveformRange( yv, waveformBottom ) )
+                    yval[ ch ] = yv;
+                else
+                    yval[ ch ] = invalidY;
+            }
+
+            for ( WORD ch = 0; ch < channelCount; ch++ )
+            {
+                if ( yval[ ch ] != invalidY )
+                {
+                    bool anyDuplicates = false;
+                    for ( WORD dc = 0; dc < channelCount; dc++ )
+                    {
+                        if ( dc != ch && yval[ ch ] == yval[ dc ] )
+                        {
+                            anyDuplicates = true;
+                            break;
+                        }
+                    }
+
+                    pbuf[ strideby4 * yval[ ch ] + x ] = ( anyDuplicates ) ? 0xff : channelColors[ ch ];
+                }
             }
         } );
     
@@ -537,7 +558,9 @@ extern "C" INT_PTR WINAPI HelpDialogProc( HWND hdlg, UINT message, WPARAM wParam
                                      "\tosc d:\\songs\\myfile.wav -T -p:g -o:0.5\n"
                                      "\n"
                                      "notes:\n"
-                                     "\tOnly uncompressed WAV files are supported\n";
+                                     "\tOnly uncompressed WAV files are supported\n"
+                                     "\tChannel 0 (left) is white. 1 is Red. Shared values are Blue.\n"
+                                     "\tOnly the first 16 channels are displayed\n";
 
     switch( message )
     {
