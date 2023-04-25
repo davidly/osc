@@ -539,6 +539,9 @@ extern "C" INT_PTR WINAPI HelpDialogProc( HWND hdlg, UINT message, WPARAM wParam
                                      "mouse:\n"
                                      "\tleft-click \tmove the window\n"
                                      "\tright-click\tcontext menu\n"
+                                     "\twheel      \tzoom in/out\n"
+                                     "\twheel+shift\tshift left/right\n"
+                                     "\twheel+ctrl\tamplitude increase/decrease\n"
                                      "\n"
                                      "keyboard:\n"
                                      "\tctrl+c\t\tcopy current view to the clipboard\n"
@@ -579,6 +582,64 @@ extern "C" INT_PTR WINAPI HelpDialogProc( HWND hdlg, UINT message, WPARAM wParam
 
     return 0;
 } //HelpDialogProc
+
+void PanLeft( HWND hwnd )
+{
+    if ( g_secondsOffset > 0.0 )
+    {
+        g_secondsOffset = __max( 0.0, g_secondsOffset - ( g_viewPeriod / 10.0 ) );
+        InvalidateRect( hwnd, NULL, TRUE );
+    }
+} //PanLeft
+
+void PanRight( HWND hwnd )
+{
+    if ( g_secondsOffset < g_wavSeconds )
+    {
+        g_secondsOffset = __min( g_wavSeconds, g_secondsOffset + ( g_viewPeriod / 10.0 ) );
+        InvalidateRect( hwnd, NULL, TRUE );
+    }
+} //PanRight
+
+void DecreasePeriod( HWND hwnd )
+{
+    if ( PeriodIndex() > -240 )
+    {
+       g_notePeriod--;
+       UpdateCurrentPeriod();
+       InvalidateRect( hwnd, NULL, TRUE );
+    }
+} //DecreasePeriod
+
+void IncreasePeriod( HWND hwnd )
+{
+    if ( PeriodIndex() < 124 )
+    {
+        g_notePeriod++;
+        UpdateCurrentPeriod();
+        InvalidateRect( hwnd, NULL, TRUE );
+    }
+} //IncreasePeriod
+
+void DecreaseAmplitude( HWND hwnd )
+{
+    if ( g_amplitudeZoom > 0.1 )
+    {
+        g_amplitudeZoom -= 0.1;
+        g_amplitudeZoom = __max( 0.1, g_amplitudeZoom );
+        InvalidateRect( hwnd, NULL, TRUE );
+    }
+} //DecreaseAmplitude
+
+void IncreaseAmplitude( HWND hwnd )
+{
+    if ( g_amplitudeZoom < 20.0 )
+    {
+        g_amplitudeZoom += 0.1;
+        g_amplitudeZoom = __min( 20.0, g_amplitudeZoom );
+        InvalidateRect( hwnd, NULL, TRUE );
+    }
+} //IncreaseAmplitude
 
 LRESULT CALLBACK WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
@@ -673,52 +734,26 @@ LRESULT CALLBACK WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam 
         case WM_KEYDOWN:
         {
             if ( 'S' == wParam && ( GetKeyState( VK_CONTROL ) & 0x8000 ) )
-            {
                 RenderView( hwnd, false );
-            }
             else if ( VK_F1 == wParam )
             {
                 HWND helpDialog = CreateDialog( NULL, MAKEINTRESOURCE( ID_OSC_HELP_DIALOG ), hwnd, HelpDialogProc );
                 ShowWindow( helpDialog, SW_SHOW );
             }
-            else if ( ( VK_LEFT == wParam ) && ( g_secondsOffset > 0.0 ) )
-            {
-                g_secondsOffset = __max( 0.0, g_secondsOffset - ( g_viewPeriod / 10.0 ) );
-                InvalidateRect( hwnd, NULL, TRUE );
-            }
-            else if ( ( VK_RIGHT == wParam ) && ( g_secondsOffset < g_wavSeconds ) )
-            {
-                g_secondsOffset = __min( g_wavSeconds, g_secondsOffset + ( g_viewPeriod / 10.0 ) );
-                InvalidateRect( hwnd, NULL, TRUE );
-            }
-            else if ( ( VK_UP == wParam ) && ( g_amplitudeZoom < 20.0 ) )
-            {
-                g_amplitudeZoom += 0.1;
-                g_amplitudeZoom = __min( 20.0, g_amplitudeZoom );
-                InvalidateRect( hwnd, NULL, TRUE );
-            }
-            else if ( ( VK_DOWN == wParam ) && ( g_amplitudeZoom > 0.1 ) )
-            {
-                g_amplitudeZoom -= 0.1;
-                g_amplitudeZoom = __max( 0.1, g_amplitudeZoom );
-                InvalidateRect( hwnd, NULL, TRUE );
-            }
-            else if ( ( VK_PRIOR == wParam ) && ( PeriodIndex() > -240 ) )
-            {
-               g_notePeriod--;
-               UpdateCurrentPeriod();
-               InvalidateRect( hwnd, NULL, TRUE );
-            }
-            else if ( ( VK_NEXT == wParam ) && ( PeriodIndex() < 124 ) )
-            {
-                g_notePeriod++;
-                UpdateCurrentPeriod();
-                InvalidateRect( hwnd, NULL, TRUE );
-            }
+            else if ( VK_LEFT == wParam )
+                PanLeft( hwnd );
+            else if ( VK_RIGHT == wParam )
+                PanRight( hwnd );
+            else if ( VK_UP == wParam )
+                IncreaseAmplitude( hwnd );
+            else if ( VK_DOWN == wParam )
+                DecreaseAmplitude( hwnd );
+            else if ( VK_PRIOR == wParam )
+                DecreasePeriod( hwnd );
+            else if ( VK_NEXT == wParam )
+                IncreasePeriod( hwnd );
             else if ( ( 0x43 == wParam ) && ( GetKeyState( VK_CONTROL ) & 0x8000 ) ) // ^c for copy
-            {
                 RenderView( hwnd, true );
-            }
             
             break;
         }
@@ -731,46 +766,24 @@ LRESULT CALLBACK WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam 
 
             if ( fwKeys & MK_CONTROL )
             {
-                if ( ( zDelta > 0 ) && ( g_amplitudeZoom < 20.0 ) )
-                {
-                    g_amplitudeZoom += 0.1;
-                    g_amplitudeZoom = __min( 20.0, g_amplitudeZoom );
-                    InvalidateRect( hwnd, NULL, TRUE );
-                }
-                else if ( ( zDelta < 0 ) && ( g_amplitudeZoom > 0.1 ) )
-                {
-                    g_amplitudeZoom -= 0.1;
-                    g_amplitudeZoom = __max( 0.1, g_amplitudeZoom );
-                    InvalidateRect( hwnd, NULL, TRUE );
-                }
+                if ( zDelta > 0 )
+                    IncreaseAmplitude( hwnd );
+                else if ( zDelta < 0 )
+                    DecreaseAmplitude( hwnd );
             }
             else if ( fwKeys & MK_SHIFT )
             {
-                if ( ( zDelta > 0 ) && ( g_secondsOffset > 0.0 ) )
-                {
-                    g_secondsOffset = __max( 0.0, g_secondsOffset - ( g_viewPeriod / 10.0 ) );
-                    InvalidateRect( hwnd, NULL, TRUE );
-                }
-                else if ( ( zDelta < 0 ) && ( g_secondsOffset < g_wavSeconds ) )
-                {
-                    g_secondsOffset = __min( g_wavSeconds, g_secondsOffset + ( g_viewPeriod / 10.0 ) );
-                    InvalidateRect( hwnd, NULL, TRUE );
-                }
+                if ( zDelta > 0 )
+                    PanRight( hwnd );
+                else if ( zDelta < 0 )
+                    PanLeft( hwnd );
             }
             else
             {
-                if ( ( zDelta < 0 ) && ( PeriodIndex() > -240 ) )
-                {
-                   g_notePeriod--;
-                   UpdateCurrentPeriod();
-                   InvalidateRect( hwnd, NULL, TRUE );
-                }
-                else if ( ( zDelta > 0 ) && ( PeriodIndex() < 124 ) )
-                {
-                    g_notePeriod++;
-                    UpdateCurrentPeriod();
-                    InvalidateRect( hwnd, NULL, TRUE );
-                }
+                if ( zDelta < 0 )
+                    DecreasePeriod( hwnd );
+                else if (  zDelta > 0 )
+                    IncreasePeriod( hwnd );
             }
 
             break;
