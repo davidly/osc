@@ -722,6 +722,59 @@ LRESULT CALLBACK WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam 
             
             break;
         }
+
+        case WM_MOUSEWHEEL:
+        {
+            int zDelta = (int) GET_WHEEL_DELTA_WPARAM( wParam );
+            WORD fwKeys = GET_KEYSTATE_WPARAM( wParam );
+            tracer.Trace( "mousewheel, delta %d, fwKeys: %u\n", zDelta, fwKeys );
+
+            if ( fwKeys & MK_CONTROL )
+            {
+                if ( ( zDelta > 0 ) && ( g_amplitudeZoom < 20.0 ) )
+                {
+                    g_amplitudeZoom += 0.1;
+                    g_amplitudeZoom = __min( 20.0, g_amplitudeZoom );
+                    InvalidateRect( hwnd, NULL, TRUE );
+                }
+                else if ( ( zDelta < 0 ) && ( g_amplitudeZoom > 0.1 ) )
+                {
+                    g_amplitudeZoom -= 0.1;
+                    g_amplitudeZoom = __max( 0.1, g_amplitudeZoom );
+                    InvalidateRect( hwnd, NULL, TRUE );
+                }
+            }
+            else if ( fwKeys & MK_SHIFT )
+            {
+                if ( ( zDelta > 0 ) && ( g_secondsOffset > 0.0 ) )
+                {
+                    g_secondsOffset = __max( 0.0, g_secondsOffset - ( g_viewPeriod / 10.0 ) );
+                    InvalidateRect( hwnd, NULL, TRUE );
+                }
+                else if ( ( zDelta < 0 ) && ( g_secondsOffset < g_wavSeconds ) )
+                {
+                    g_secondsOffset = __min( g_wavSeconds, g_secondsOffset + ( g_viewPeriod / 10.0 ) );
+                    InvalidateRect( hwnd, NULL, TRUE );
+                }
+            }
+            else
+            {
+                if ( ( zDelta < 0 ) && ( PeriodIndex() > -240 ) )
+                {
+                   g_notePeriod--;
+                   UpdateCurrentPeriod();
+                   InvalidateRect( hwnd, NULL, TRUE );
+                }
+                else if ( ( zDelta > 0 ) && ( PeriodIndex() < 124 ) )
+                {
+                    g_notePeriod++;
+                    UpdateCurrentPeriod();
+                    InvalidateRect( hwnd, NULL, TRUE );
+                }
+            }
+
+            break;
+        }
     }
 
     return DefWindowProc( hwnd, uMsg, wParam, lParam );
