@@ -2,8 +2,12 @@
 // Oscilloscope for WAV files
 //
 
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+
+#pragma warning( disable: 4458 ) // gdi+ generates these warnings
 #include <gdiplus.h>
+#pragma warning( default: 4458 ) // gdi+ generates these warnings
 
 #include <stdio.h>
 #include <math.h>
@@ -104,6 +108,7 @@ void DeleteFolder( const WCHAR * folder )
     RemoveDirectory( folder );
 } //DeleteFolder
 
+#pragma warning( disable: 4100 ) // unreferenced formal parameter
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow )
 {
     SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
@@ -154,7 +159,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdSho
                    if ( ':' != pwcArg[2] )
                        return 0;
 
-                   char a = tolower( pwcArg[3] );
+                   char a = (char) tolower( pwcArg[3] );
 
                    if ( a > 'g' || a < 'a' )
                        return 0;
@@ -242,7 +247,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdSho
     wc.hCursor       = LoadCursor( NULL, IDC_ARROW );
     wc.hIcon         = LoadIcon( hInstance, MAKEINTRESOURCE( 100 ) ) ;
     wc.lpszClassName = CLASS_NAME;
-    wc.hbrBackground = (HBRUSH) GetStockObject(HOLLOW_BRUSH);
+    wc.hbrBackground = (HBRUSH) GetStockObject( HOLLOW_BRUSH );
     RegisterClass( &wc );
 
     HWND hwnd = CreateWindowEx( WS_EX_TOOLWINDOW, CLASS_NAME, L"Oscilloscope", WS_POPUP, posLeft, posTop,
@@ -254,7 +259,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdSho
     }
 
     ShowWindow( hwnd, nCmdShow );
-    SetProcessWorkingSetSize( GetCurrentProcess(), ~0, ~0 );
+    SetProcessWorkingSetSize( GetCurrentProcess(), ~ (size_t) 0, ~ (size_t) 0 );
 
     MSG msg = {};
     while ( GetMessage( &msg, NULL, 0, 0 ) )
@@ -286,7 +291,7 @@ __forceinline DWORD SampleToY( double l, double halfBottom )
 __forceinline bool InWaveformRange( DWORD y, DWORD waveformBottom )
 {
     // amplified waveforms can be outside of this range, and that must be clipped
-    return ( ( y >= g_borderSize ) && ( y < waveformBottom ) );
+    return ( ( y >= (DWORD) g_borderSize ) && ( y < waveformBottom ) );
 } //InWaveformRange
 
 void RenderTextToDC( HDC hdc, RECT & rect )
@@ -302,10 +307,10 @@ void RenderTextToDC( HDC hdc, RECT & rect )
     swprintf_s( awcText, _countof( awcText ), L"period %wc%wc %lf %ws    amplitude %wc%wc %2.1lf    offset %wc%wc %lf",
                 0x25b2, 0x25bc, g_viewPeriod, NoteToString(), 0x2191, 0x2193, g_amplitudeZoom, 0x2190, 0x2192, g_secondsOffset );
     
-    int len = wcslen( awcText );
+    size_t len = wcslen( awcText );
     RECT rectTopText = rect;
     rectTopText.bottom = g_fontHeight;
-    ExtTextOut( hdc, rectTopText.right / 2, 0, ETO_OPAQUE, &rectTopText, awcText, len, NULL );
+    ExtTextOut( hdc, rectTopText.right / 2, 0, ETO_OPAQUE, &rectTopText, awcText, (UINT) len, NULL );
 
     // The bottom text never changes; compute it once
     static WCHAR awcWav[ 100 ] = {};
@@ -316,7 +321,7 @@ void RenderTextToDC( HDC hdc, RECT & rect )
     len = wcslen( awcWav );
     RECT rectBottomText = rect;
     rectBottomText.top = rectBottomText.bottom - g_fontHeight;
-    ExtTextOut( hdc, rectBottomText.right / 2, rectBottomText.top, ETO_OPAQUE, &rectBottomText, awcWav, len, NULL );
+    ExtTextOut( hdc, rectBottomText.right / 2, rectBottomText.top, ETO_OPAQUE, &rectBottomText, awcWav, (UINT) len, NULL );
 
     SetTextAlign( hdc, taOld );
     SetTextColor( hdc, crTextOld );
